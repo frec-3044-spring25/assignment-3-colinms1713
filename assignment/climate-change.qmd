@@ -1,6 +1,6 @@
 ---
 title: "Climate Change Module"
-author: 'Add name'
+author: Colin Smith
 format:
   html:
     embed-resources: true
@@ -44,14 +44,29 @@ ggplot(co2, aes(x = decimal_date, y = monthly_average)) +
 Describe the overall trend in the CO2 data.
 
 **Answer 1:**
+The CO2 concentration in the atmosphere has been increasing every year since 1958. By the slight curve of the line, it appears that it is increasing exponentially.
 
 **Question 2:**
 
 How does CO2 vary within a year?  What month is it at max?  Min?  What might explain this sub-annual pattern? (you will need to write code and make a plot to answer this question)
 
+```{r}
+co2 |> #groups the co2 tables by month, creates a mean CO2 concentration for a month using the existing monthly average, and plots it.
+  group_by(month) |> 
+  summarize(monthly_avg = mean(monthly_average)) |> 
+  ggplot(aes(x = month, y = monthly_avg)) +
+  geom_line() +
+  geom_point() +
+  labs(x = "Month", 
+       y = "Average CO2 concentration (ppm)",
+       title = "Average CO2 concentration by Month") +
+  theme_classic()
+```
+
+
 **Answer 2:**
 
-
+CO2 concentration peaks in late spring, and drops by roughly 4 ppm to its lowest concentration. The peak month is May, and the lowest monthly average occurs in September. The slightly lower CO2 concentration in the atmosphere could likely be explained by greater photosynthetic rates in summer and early autumn, because vegetation is fully grown, or in bloom.
 
 ## Global Temperature Data
 
@@ -68,6 +83,10 @@ Describe the data set to the best of your ability, given the documentation provi
 - Where is the data from?
 - Describe the class of each column and what units it is measured in. 
 - What is the difference between "global temperature" and "global temperature anomaly"? 
+```{r}
+
+```
+
 
 **Answer 3:**
 
