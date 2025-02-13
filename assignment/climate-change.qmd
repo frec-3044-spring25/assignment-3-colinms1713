@@ -83,13 +83,11 @@ Describe the data set to the best of your ability, given the documentation provi
 - Where is the data from?
 - Describe the class of each column and what units it is measured in. 
 - What is the difference between "global temperature" and "global temperature anomaly"? 
-```{r}
 
-```
 
 
 **Answer 3:**
-
+The data comes from NASA/GISS, or the Goddard Institute for Space Studies. The Year column in the data set is a numeric, specifically an integer. No_Smoothing is a numeric double, and its units are Celsius. Based on the graph, No_Smoothing is the annual mean. Lowess(5) is also a double with units of Celsius, and it is sort of like a line of best fit. Global temperature is the actual measured temperature, whereas a global temperature anomaly is the difference between the measured temperature and the average, or baseline, temperature over a period of time.
 
 **Question 4:**
 
@@ -98,12 +96,31 @@ Construct the necessary R code to import and prepare for plotting the following 
 You'll need to determine the file's delimiter and any comments or skips. You will also need to be sure that you have column names. You will not directly use the code above to read the CO2 data, but that code provides helpful tips for reading the data.
 
 **Answer 4:**
+```{r}
+?read_table
+global_temp <- read_table(
+  "https://data.giss.nasa.gov/gistemp/graphs/graph_data/Global_Mean_Estimates_based_on_Land_and_Ocean_Data/graph.txt",
+  col_names = c("Year", "Mean_Temp", "Lowess"),
+  skip = 5
+) #Reads in the global temperature data, skips the first 5 lines and then re-adds the headers, renamed to be similar to NASA's graph.
+```
+
 
 **Question 5:**
 
 Plot the trend in global mean temperatures over time.  Describe what you see in the plot and how you interpret the patterns you observe.
 
 **Answer 5:**
+```{r}
+global_temp |> 
+  ggplot(aes(x = Year, y = Mean_Temp)) +
+  geom_point() +
+  geom_line() +
+  labs(x = "Year", y = "Mean Temp (C)",
+       title = "Global Mean Temperatures over Time") +
+  theme_classic()
+```
+The mean global temperature is on a generally upwards trend, but it fluctuates year to year. There was a large spike in the 1940s, which seems to indicate that global temperature rose during World War 2, perhaps due to a massive increase in manufacturing, or higher amounts of combustion. The reason for the year to year fluctuation may be caused by the fact that there are countless influences on global temperature.
 
 ## Evaluating the evidence for a "Pause" in warming?
 
@@ -116,20 +133,43 @@ You will use rolling averages to help you explore the evidence for a pause. Sinc
 Use a search engine (e.g., Google) or a chat LLM to find out how to calculate a rolling average in R. What search term or chat LLM prompt did you use?  What website or answer from the chat LLM did you end up using?  How much did you need to modify the code from the website or chat LLM to answer the question successfully?
 
 **Answer 6:**
-
+I asked ChatGPT and Google the same question, "How to calculate rolling average in R?" and both told me to install the library zoo, which includes a rollmean function.
 **Question 7:**
 
 - What is the meaning of "5-year average" vs. "annual average"?
 - Create a data frame from the annual temperature anomaly data (from Question 4) with three new columns: 5-year running averages, 10-year running averages, and 20-year running averages.
 
 **Answer 7:**
+A 5-year average is a rolling average over the past 5 years, while an annual average is just the mean of a single year.
+```{r}
+library(zoo)
+global_temp <- global_temp |> #5 year rolling average, using right align.
+  mutate("Five_Year_Avg" = rollmean(Mean_Temp, k = 5, fill = NA, align = "right")) |> 
+  mutate("Ten_Year_Avg" = rollmean(Mean_Temp, k = 10, fill = NA, align = "right")) |>
+  mutate("Twenty_Year_Avg" = rollmean(Mean_Temp, k = 20, fill = NA, align = "right"))
+```
+
 
 **Question 8:**
 
 Plot the different averages on the *same plot* and describe what differences you see and why.  
 
 **Answer 8:**
+```{r}
+global_temp |> 
+  ggplot(aes(x = Year)) +
+  geom_line(aes(y = Five_Year_Avg, color = "blue")) +
+  geom_line(aes(y = Ten_Year_Avg, color = "red")) +
+  geom_line(aes(y = Twenty_Year_Avg, color = "green")) +
+  scale_color_manual(labels = c("Five Year Average", "Ten Year Average", "Twenty Year Average"), 
+                     values = c("blue", "red", "green"))+
+  labs(x = "Year", 
+       y = "Rolling average temperature (C)",
+       title = "Comparing rolling average mean temperatures by year") +
+  theme_classic()
+```
 
+The Five Year Average is more affected by recent values than the Ten or Twenty Year averages,so it is typically more noticeably above or below the other two lines, though from around 1980 onwards, it tends to be the highest values of the three graphs. The more years included in a rolling average, the lower the mean tends to be, because there are far more lower values in a 10 year average than a 5 year average, and there are far more lower values in a 20 year average than a 10 year average, but the trends of the graphs are largely the same.
 **Question 9:**
 
 By examining the data here, what evidence do you find or not find for such a pause? 
