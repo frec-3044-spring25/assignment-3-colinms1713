@@ -97,7 +97,6 @@ You'll need to determine the file's delimiter and any comments or skips. You wil
 
 **Answer 4:**
 ```{r}
-?read_table
 global_temp <- read_table(
   "https://data.giss.nasa.gov/gistemp/graphs/graph_data/Global_Mean_Estimates_based_on_Land_and_Ocean_Data/graph.txt",
   col_names = c("Year", "Mean_Temp", "Lowess"),
@@ -134,6 +133,7 @@ Use a search engine (e.g., Google) or a chat LLM to find out how to calculate a 
 
 **Answer 6:**
 I asked ChatGPT and Google the same question, "How to calculate rolling average in R?" and both told me to install the library zoo, which includes a rollmean function.
+
 **Question 7:**
 
 - What is the meaning of "5-year average" vs. "annual average"?
@@ -170,11 +170,13 @@ global_temp |>
 ```
 
 The Five Year Average is more affected by recent values than the Ten or Twenty Year averages,so it is typically more noticeably above or below the other two lines, though from around 1980 onwards, it tends to be the highest values of the three graphs. The more years included in a rolling average, the lower the mean tends to be, because there are far more lower values in a 10 year average than a 5 year average, and there are far more lower values in a 20 year average than a 10 year average, but the trends of the graphs are largely the same.
+
 **Question 9:**
 
 By examining the data here, what evidence do you find or not find for such a pause? 
 
 **Answer 9:**
+The closest thing to evidence for a pause is the plateauing of the 10 year average around 1960, but overall the data set implies that there was no pause at all, and that CO2 levels are increasing at an increasing rate.
 
 ## Longer term trends in CO2 Records
 
@@ -215,12 +217,32 @@ Your answer to Question 10 is going to be a mix of code chunks and text that you
 - Describe your conclusions to the question "How do recent atmospheric CO2 levels compare to historical levels?" using your plot as supporting evidence.   
 
 **Answer 10:**
+The columns and units are: Depth in meters, Age of the ice in years (before present), mean age of the air in years (before present) and the CO2 concentration in the air in parts per million. 
+The temporal resolution of the data is not consistent, ranging between 2000 years between measurements and 200 years.
 
 ```{r}
-
+ice_core_CO2 <- read_table("vostok.icecore.co2", skip = 21, col_names = c("Depth", "Age_Ice", "Mean_Age_Air", "CO2")) |> 
+  arrange(desc(Age_Ice)) |> 
+  mutate(year = (2003 - Age_Ice)) #Included year to represent the year in BC/BCE by subtracting Age (BP) from the year 2003.
+ice_core_CO2 |> 
+  ggplot(aes(x = Age_Ice, y = CO2)) +
+  geom_line() +
+  theme_classic() +
+  labs(x = "Years Before Present", y = "CO2 concentration (PPMV)", title = "CO2 Concentration over time")
 
 ```
+```{r}
+co2 <- co2 |> group_by(year) |> 
+  mutate(CO2 = mean(monthly_average)) #creates a yearly average for the original CO2 dateframe to more easily combine the two
+co2_comp <- bind_rows(co2, ice_core_CO2)
 
+co2_comp |>
+  ggplot(aes(x = year, y = CO2)) +
+  geom_line() +
+  theme_classic() +
+  labs(x = "Year", y = "CO2 Concentration (ppmv)", title = "CO2 Concentration over Time")
+```
+As shown in the graph, current CO2 levels are significantly higher than they have ever been in the past, at over 420 ppm, where as the highest on record within the ice core data set is 298.7 ppm. CO2 concentration is also increasing at a much faster rate than any previous period-- to the point where, with the scale of the graph, it looks like it is shooting straight up.
 # Render and committing
 
 Remember to Render your document as HTML and comment+push to GitHub your code and rendered HTML that was created when you knitted the document.  Your GitHub repository should have multiple commits with informative commit messages.
@@ -230,4 +252,13 @@ Remember to Render your document as HTML and comment+push to GitHub your code an
 Include citation of any AI-generated assistance or discussion with classmates (per policy in syllabus). Proper documentation of AI-generated assistance includes the prompt, the source (e.g., ChatGPT), and the significant parts of the response.  Proper documentation of discussion with classmates include listing their names and the components discussed.  
 
 
+Per question 6, I asked chatgpt "how to calculate a rolling average in R?"
+The important parts of its response are as follows:
+1. Install and load the "zoo" package
+library(zoo)
+3. Calculate the rolling average:
+rolling_average <- rollmean(data, k = 3, fill = NA)
 
+k: the window size for the rolling average.
+
+The parts omitted from the response were for creating a dataframe and alignment, the latter of which was answered using ?rollmean().
